@@ -104,8 +104,14 @@ This applies to ALL steps below — implementation, review, and fixes.
 
 Splitting creates partial states, seam gaps, coordination overhead, and false confidence from partial testing. If Codex times out on a large plan, retry with the same full prompt — do not decompose.
 
+Use explicit sandbox and approval flags before `exec`: implementation needs
+`-s danger-full-access -a never` when building, fetching dependencies, or running
+browsers; reviews use `-s read-only -a never`. Do not use the removed `--full-auto`
+alias. Source: résumé comment implementation, 2026-09-09 — Codex CLI 0.153.4
+rejected `codex exec --full-auto --help` before starting a session.
+
 ```bash
-codex exec --full-auto "[GOALS-ONLY] Implement the complete reviewed plan at docs/plans/YYYY-MM-DD-feature.md.
+codex -s danger-full-access -a never exec "[GOALS-ONLY] Implement the complete reviewed plan at docs/plans/YYYY-MM-DD-feature.md.
 
 INVARIANTS (from .claude/rules/):
 [paste relevant rules content here]
@@ -133,7 +139,7 @@ After implementation completes, launch a SEPARATE Codex instance to review. This
 2. **Intention alignment** — Does the code actually achieve the GOAL described in the plan? Code can be correct and complete against the plan's tasks while still being the wrong solution. The reviewer must read the plan's Goal section and verify the implementation actually solves the stated problem, not just complete the task list.
 
 ```bash
-codex exec -s read-only "Review the implementation against the plan at docs/plans/YYYY-MM-DD-feature.md.
+codex -s read-only -a never exec "Review the implementation against the plan at docs/plans/YYYY-MM-DD-feature.md.
 
 TWO REVIEW DIMENSIONS:
 
@@ -178,7 +184,7 @@ Run `npm test` (or equivalent) in affected workspaces. If tests fail, fix and re
 For any [MISSING], [WRONG], or intention-misaligned items from the review:
 
 ```bash
-codex exec --full-auto "[GOALS-ONLY] Fix gaps from the implementation review.
+codex -s danger-full-access -a never exec "[GOALS-ONLY] Fix gaps from the implementation review.
 
 Review findings at tmp/reviews/<name>.review.log.
 Plan at docs/plans/YYYY-MM-DD-feature.md.
@@ -204,7 +210,7 @@ Do NOT send changes to any remote repository. Commit locally only." 2>&1 | tee t
 One last pass to verify completeness, correctness, AND intention:
 
 ```bash
-codex exec -s read-only "Final review of the implementation. Plan at docs/plans/YYYY-MM-DD-feature.md.
+codex -s read-only -a never exec "Final review of the implementation. Plan at docs/plans/YYYY-MM-DD-feature.md.
 
 Verify:
 1. ALL plan items are implemented (check every acceptance criterion)
