@@ -7,6 +7,22 @@ description: Use whenever a reviewed plan exists and implementation work is abou
 
 **This is the single authority for execution protocol.** CLAUDE.md / AGENTS.md define the lifecycle; this skill defines how to execute it. When you have a reviewed plan ready to implement, this is your playbook.
 
+## Choose the execution owner before applying this playbook
+
+Apply the active AGENTS.md scope and review level first. This skill cannot turn a
+focused change into a mandatory delegation or independent-review workflow. When
+the current executor is already Codex and can own the complete change, implement
+in that session; do not spawn another Codex merely to satisfy the examples below.
+The “one plan = one invocation” rule applies when implementation is delegated:
+keep one owner accountable for the whole result. Independent tests and release
+preflight may run concurrently when their state is isolated. Required review
+still inspects the complete stable diff and its evidence before release.
+
+Why: the September 9, 2026 résumé comment retrospective found that a Codex parent
+delegated the entire job to another Codex, mostly supervised it, and then ran a
+serial review. Ownership continuity does not require that extra agent boundary.
+Source: `tejasdc/resume`, `docs/2026-09-09-comment-redesign-retrospective.md`.
+
 ## The Bitter Lesson — How to Talk to Codex
 
 Codex is smarter than you at codebase-wide analysis. When you narrow its scope — prescribing files, diagnosing root causes, listing steps — you replace its intelligence with yours. Its intelligence is why you're using it.
