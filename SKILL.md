@@ -29,7 +29,7 @@ Codex is smarter than you at codebase-wide analysis. When you narrow its scope �
 
 **Every Codex prompt follows this structure:**
 1. **GOAL** — what the outcome should be (behavior, not implementation)
-2. **CONTEXT** — pointers to files (plans, rules, docs). NOT your summary of those files
+2. **CONTEXT** — pointers to original user requirements/amendments and files (plans, rules, docs). NOT your summary of those files
 3. **KNOWN CONCERNS** — things we've already identified as risks. Framed as "these are the things we know to check, but there may be things we don't know — use your judgment to find issues beyond this list"
 4. **INVARIANTS** — battle-tested rules from `.claude/rules/` + "Do NOT send changes to any remote repository. Commit locally only."
 5. **VERIFICATION GATES** — see below. Non-negotiable. Codex cannot declare done until all gates pass.
@@ -71,6 +71,17 @@ Report each gate's result in your final summary, with the exact command you ran 
 ---
 
 ## Core Principle: The Plan is a Guide, Not an Oracle
+
+For design and implementation reviews, supply the original user request and later
+amendments independently of the plan. First map requested outcomes to the artifact;
+then assess the proposed solution. An author-added non-goal cannot exclude a user
+requirement without evidence that the user changed scope. When the source request
+is unavailable, report that alignment is unverified rather than treating the plan's
+Goal section as proof. More reviewers do not fix shared, narrowed requirements.
+
+Source: [September 14, 2026 observability retrospective](https://github.com/tejasdc/thinkering/blob/main/docs/plans/2026-09-14-observability-design.md#requirements-and-the-previous-scope-failure).
+Both model reviews accepted a diagnosis-only design after the author excluded the
+requested logging/metrics/monitoring service comparison from their prompts.
 
 The plan is the best understanding at planning time — but the code is the ground truth. When the implementation agent finds something the plan got wrong (stale line numbers, wrong assumptions, missing edge cases), it must:
 1. Fix it in the code (do the right thing, not the planned thing)
@@ -152,10 +163,10 @@ Run with `run_in_background: true`. Do other work while waiting.
 After implementation completes, launch a SEPARATE Codex instance to review. This review checks TWO dimensions:
 
 1. **Code correctness** — Does the code work? Are there bugs, missing imports, type errors?
-2. **Intention alignment** — Does the code actually achieve the GOAL described in the plan? Code can be correct and complete against the plan's tasks while still being the wrong solution. The reviewer must read the plan's Goal section and verify the implementation actually solves the stated problem, not just complete the task list.
+2. **Intention alignment** — Does the plan and implementation achieve the original user requirements and amendments? Check their coverage before using the plan's tasks to assess the code. Correct implementation of an incorrectly scoped plan is still the wrong solution.
 
 ```bash
-codex -s read-only -a never exec "Review the implementation against the plan at docs/plans/YYYY-MM-DD-feature.md.
+codex -s read-only -a never exec "Review the implementation against the original user requirements and amendments at tmp/reviews/<name>.requirements.md, then the plan at docs/plans/YYYY-MM-DD-feature.md. The requirements file must contain the source request, not the plan author's paraphrase.
 
 TWO REVIEW DIMENSIONS:
 
@@ -165,8 +176,8 @@ TWO REVIEW DIMENSIONS:
    - Do plan deviations introduce regressions?
    - Were any plan items skipped entirely?
 
-2. INTENTION ALIGNMENT — Read the Goal section of the plan:
-   - Does the implementation actually solve the stated goal?
+2. INTENTION ALIGNMENT — Read the original requirements and amendments independently of the plan:
+   - Do the plan and implementation cover the requested outcomes? Are exclusions user-authorized?
    - Is this the right architecture for the problem?
    - Could the code pass all task checks but still fail to achieve the intended outcome?
    - Are there architectural decisions that technically work but miss the point?
@@ -226,13 +237,13 @@ Do NOT send changes to any remote repository. Commit locally only." 2>&1 | tee t
 One last pass to verify completeness, correctness, AND intention:
 
 ```bash
-codex -s read-only -a never exec "Final review of the implementation. Plan at docs/plans/YYYY-MM-DD-feature.md.
+codex -s read-only -a never exec "Final review of the implementation. Original user requirements and amendments at tmp/reviews/<name>.requirements.md; plan at docs/plans/YYYY-MM-DD-feature.md.
 
 Verify:
 1. ALL plan items are implemented (check every acceptance criterion)
 2. Code compiles and all tests pass
 3. No bugs, race conditions, or security issues
-4. The implementation solves the GOAL described in the plan — not just completes the tasks
+4. The plan and implementation satisfy the original requirements and amendments; author-added exclusions do not silently narrow them
 5. The architecture is right for the problem — not just technically correct
 6. Any plan deviations were improvements, not regressions
 7. Tests are testing the right things (not just passing)
